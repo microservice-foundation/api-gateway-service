@@ -1,0 +1,27 @@
+spring:
+  application:
+    name: ${MICROSERVICE_NAME:api-gateway-service}
+  cloud:
+    config:
+      fail-fast: true
+      discovery:
+        enabled: true
+        service-id: ${CONFIGURATION_SERVER_NAME:configuration-service}
+      retry:
+        initial-interval: 10000
+        max-interval: 60000
+        max-attempts: 20
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: ${EUREKA_URI:http://localhost:8770/eureka}
+    register-with-eureka: true
+    fetch-registry: true
+    healthcheck:
+      enabled: true
+  instance:
+    hostname: ${spring.application.name}
+    instance-id: ${spring.application.name}:${random.int}
+    preferIpAddress: true
+    lease-renewal-interval-in-seconds: 10
