@@ -1,24 +1,11 @@
-song.service.name: ${SONG_SERVICE_NAME:song-service}
-resource.service.name: ${RESOURCE_SERVICE_NAME:resource-service}
+song.service.name: ${SONG_SERVICE_NAME:SONG-SERVICE}
+resource.service.name: ${RESOURCE_SERVICE_NAME:RESOURCE-SERVICE}
 server.port: 0
 logging.level.root: DEBUG
 
 spring:
   cloud:
     gateway:
-      globalcors:
-        cors-configurations:
-          '[/**]':
-            allowedOriginPatterns: '*'
-            allowedMethods:
-              - GET
-              - POST
-              - HEAD
-              - PUT
-              - DELETE
-            allowedHeaders: '*'
-            allowCredentials: true
-        add-to-simple-url-handler-mapping: true
       routes:
         - id: get-resources
           uri: lb://${resource.service.name}/api/v1
@@ -41,7 +28,6 @@ spring:
               args:
                 redis-rate-limiter.replenishRate: 10
                 redis-rate-limiter.burstCapacity: 20
-                redis-rate-limiter.requestedTokens: 1
         - id: delete-resources
           uri: lb://${resource.service.name}/api/v1
           predicates:
@@ -88,5 +74,3 @@ spring:
                 redis-rate-limiter.replenishRate: 10
                 redis-rate-limiter.burstCapacity: 20
                 redis-rate-limiter.requestedTokens: 1
-management.endpoints.web.exposure.include: health, info
-
