@@ -1,6 +1,5 @@
 song.service.name: ${SONG_SERVICE_NAME:SONG-SERVICE}
 resource.service.name: ${RESOURCE_SERVICE_NAME:RESOURCE-SERVICE}
-server.port: 0
 logging.level.root: DEBUG
 
 spring:
