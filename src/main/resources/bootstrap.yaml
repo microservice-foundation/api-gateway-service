@@ -1,4 +1,4 @@
-server.port: 0
+server.port: 8771
 
 spring:
   application.name: ${MICROSERVICE_NAME:api-gateway-service}
@@ -27,4 +27,5 @@ eureka:
     preferIpAddress: true
     lease-renewal-interval-in-seconds: 10
 
+spring.redis.host: ${REDIS_HOST:localhost}
 management.endpoints.web.exposure.include: health, info, refresh
