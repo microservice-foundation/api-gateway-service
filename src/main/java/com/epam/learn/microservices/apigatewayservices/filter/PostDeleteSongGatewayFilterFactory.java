@@ -58,14 +58,14 @@ public class PostDeleteSongGatewayFilterFactory extends
                     .exchangeToMono(clientResponse -> clientResponse.bodyToMono(jsonType)
                         .map(songRecordIdList -> {
                             Map<String, Object> songRecordByResourceId = new HashMap<>();
-                            songRecordIdList.forEach(songRecordId -> songRecordByResourceId.put("resourceId",
-                                    songRecordId.get("id")));
+                            songRecordIdList.forEach(songRecord -> songRecordByResourceId.put("resourceId",
+                                    songRecord.get("id")));
 
-                            Map<Integer, Map<String, Object>> songRecordIdEntries = songRecordIdList.stream()
+                            Map<Integer, Map<String, Object>> songRecordEntries = songRecordIdList.stream()
                                     .collect(Collectors.toMap(pr -> (int)pr.get("id"), pr->songRecordByResourceId));
 
                             return castedInput.stream().map(originEntry -> {
-                                originEntry.put(config.composeField, songRecordIdEntries.get(
+                                originEntry.put(config.composeField, songRecordEntries.get(
                                         originEntry.get(config.originBaseField)));
 
                                 return originEntry;
