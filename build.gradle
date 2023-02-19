@@ -4,7 +4,7 @@ plugins {
     id 'io.spring.dependency-management' version "${dependancyManagementVersion}"
 }
 
-group 'com.epam.learn'
+group 'com.epam.training'
 version '1.0'
 
 repositories {
@@ -30,6 +30,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'io.projectreactor:reactor-test'
+    testImplementation 'org.springframework.cloud:spring-cloud-starter-contract-stub-runner'
+    testImplementation 'org.hamcrest:hamcrest:2.2'
 }
 
 dependencyManagement {

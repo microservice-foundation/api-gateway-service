@@ -1,4 +1,4 @@
-package com.epam.learn.microservices.apigatewayservices.filter;
+package com.epam.training.microservices.apigatewayservice.filter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,7 +13,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -23,6 +22,7 @@ public class PostDeleteSongGatewayFilterFactory extends
         AbstractGatewayFilterFactory<PostDeleteSongGatewayFilterFactory.Config> {
 
     private static final Logger log = LoggerFactory.getLogger(PostDeleteSongGatewayFilterFactory.class);
+    private static final String RESOURCE_ID = "resourceId";
     private final ModifyResponseBodyGatewayFilterFactory modifyResponseBodyFilter;
     private final WebClient webClient;
     ParameterizedTypeReference<List<Map<String, Object>>> jsonType =
@@ -50,28 +50,24 @@ public class PostDeleteSongGatewayFilterFactory extends
                         .collect(Collectors.joining(","));
 
                 return webClient
-                        .delete()
-                        .uri(UriComponentsBuilder.fromHttpUrl(config.targetBaseUrl)
-                            .path(config.targetPath)
-                            .queryParam(config.queryParam, baseFieldValues)
-                            .build().toUri())
+                    .delete()
+                    .uri(UriComponentsBuilder.fromHttpUrl(config.targetBaseUrl)
+                        .path(config.targetPath)
+                        .queryParam(config.queryParam, baseFieldValues)
+                        .build().toUri())
                     .exchangeToMono(clientResponse -> clientResponse.bodyToMono(jsonType)
-                        .map(songRecordIdList -> {
-                            Map<String, Object> songRecordByResourceId = new HashMap<>();
-                            songRecordIdList.forEach(songRecord -> songRecordByResourceId.put("resourceId",
-                                    songRecord.get("id")));
+                    .map(songRecordIdList -> {
 
-                            Map<Integer, Map<String, Object>> songRecordEntries = songRecordIdList.stream()
-                                    .collect(Collectors.toMap(pr -> (int)pr.get("id"), pr->songRecordByResourceId));
-
-                            return castedInput.stream().map(originEntry -> {
-                                originEntry.put(config.composeField, songRecordEntries.get(
-                                        originEntry.get(config.originBaseField)));
-
+                        Map<Integer, Map<String, Object>> songRecordEntries = songRecordIdList.stream()
+                                .collect(Collectors.toMap(pr -> (int)pr.get(RESOURCE_ID), pr->pr));
+                        log.debug("Delete song metadata by resource id: {}", songRecordIdList);
+                        return castedInput.stream()
+                            .map(originEntry -> { originEntry.put(config.composeField,
+                                    songRecordEntries.get(originEntry.get(config.originBaseField)));
                                 return originEntry;
-                            }).collect(Collectors.toList());
-                        })
-                    );
+                            })
+                            .collect(Collectors.toList());
+                    }));
             });
         });
     }
@@ -94,6 +90,17 @@ public class PostDeleteSongGatewayFilterFactory extends
             this.targetPath = targetPath;
             this.queryParam = queryParam;
             this.composeField = composeField;
+        }
+
+        @Override
+        public String toString() {
+            return "Config{" +
+                    "originBaseField='" + originBaseField + '\'' +
+                    ", targetBaseUrl='" + targetBaseUrl + '\'' +
+                    ", targetPath='" + targetPath + '\'' +
+                    ", queryParam='" + queryParam + '\'' +
+                    ", composeField='" + composeField + '\'' +
+                    '}';
         }
     }
 }

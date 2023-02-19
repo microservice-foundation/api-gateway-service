@@ -1,4 +1,4 @@
-package com.epam.learn.microservices.apigatewayservices.configuration;
+package com.epam.training.microservices.apigatewayservice.configuration;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

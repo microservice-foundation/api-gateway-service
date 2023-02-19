@@ -1,4 +1,4 @@
-package com.epam.learn.microservices.apigatewayservices;
+package com.epam.training.microservices.apigatewayservice;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
