@@ -1,4 +1,4 @@
-server.port: 8771
+server.port: ${SERVER_PORT:8771}
 
 spring:
   application.name: ${MICROSERVICE_NAME:api-gateway-service}
