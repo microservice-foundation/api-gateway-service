@@ -6,7 +6,7 @@ song:
     name: ${SONG_SERVICE_NAME:SONG-SERVICE}
     path: /api/v1/songs
     uri: lb://${song.service.name}
-    delete-by-resource-id: /delete-by-resource-id
+    by-resource-id: /by-resource-id
 
 # resource service configuration
 resource:

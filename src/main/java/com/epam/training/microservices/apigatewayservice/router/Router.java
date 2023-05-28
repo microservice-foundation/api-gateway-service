@@ -21,7 +21,7 @@ public class Router {
   private static final String PATH_ID = "/{id}";
   private static final String PATH_RESOURCES = "/resources";
   private static final String PATH_SONGS = "/songs";
-  private static final String PATH_DELETE_SONG_METADATA_BY_RESOURCE_ID = "/delete-by-resource-id";
+  private static final String PATH_DELETE_SONG_METADATA_BY_RESOURCE_ID = "/by-resource-id";
   private static final String QUERY_PARAM_DELETE_SONG_METADATA = "id";
   private static final String QUERY_PARAM_DELETE_RESOURCE = "id";
 
@@ -41,7 +41,7 @@ public class Router {
                 .requestRateLimiter().rateLimiter(RedisRateLimiter.class,
                     config -> config.setReplenishRate(rateLimiterProperties.getReplenishRate()).setBurstCapacity(rateLimiterProperties.getBurstCapacity())
                         .setRequestedTokens(rateLimiterProperties.getRequestedTokens())).and()
-                .setPath(resourceServiceProperties.getPath()))
+                .setPath(resourceServiceProperties.getPath() + PATH_ID))
             .uri(resourceServiceProperties.getUri())
         )
         .route("post-resources", route -> route
@@ -72,15 +72,29 @@ public class Router {
         .route("get-songs", route -> route
             .method(HttpMethod.GET).and()
             .path(PATH_SONGS + PATH_ID)
-            .filters(filter -> filter.setPath(songServiceProperties.getPath())
-                .requestRateLimiter(config -> config.setRateLimiter(redisRateLimiter(rateLimiterProperties))))
+            .filters(filter -> filter
+                .requestRateLimiter().rateLimiter(RedisRateLimiter.class, config -> config.setReplenishRate(rateLimiterProperties.getReplenishRate()).setBurstCapacity(rateLimiterProperties.getBurstCapacity())
+                    .setRequestedTokens(rateLimiterProperties.getRequestedTokens())).and()
+                .setPath(songServiceProperties.getPath() + PATH_ID))
             .uri(songServiceProperties.getUri())
         )
         .route("post-songs", route -> route
             .method(HttpMethod.POST).and()
             .path(PATH_SONGS)
-            .filters(filter -> filter.setPath(songServiceProperties.getPath())
-                .requestRateLimiter(config -> config.setRateLimiter(redisRateLimiter(rateLimiterProperties))))
+            .filters(filter -> filter
+                .requestRateLimiter().rateLimiter(RedisRateLimiter.class, config -> config.setReplenishRate(rateLimiterProperties.getReplenishRate()).setBurstCapacity(rateLimiterProperties.getBurstCapacity())
+                    .setRequestedTokens(rateLimiterProperties.getRequestedTokens())).and()
+                .setPath(songServiceProperties.getPath()))
+            .uri(songServiceProperties.getUri())
+        )
+        .route("delete-songs", route -> route
+            .method(HttpMethod.DELETE).and()
+            .path(PATH_SONGS).and()
+            .query(QUERY_PARAM_DELETE_SONG_METADATA)
+            .filters(filter -> filter
+                .requestRateLimiter().rateLimiter(RedisRateLimiter.class, config -> config.setReplenishRate(rateLimiterProperties.getReplenishRate()).setBurstCapacity(rateLimiterProperties.getBurstCapacity())
+                    .setRequestedTokens(rateLimiterProperties.getRequestedTokens())).and()
+                .setPath(songServiceProperties.getPath()))
             .uri(songServiceProperties.getUri())
         )
         .route("delete-songs-by-resource-id", route -> route
@@ -93,9 +107,5 @@ public class Router {
                 .setPath(songServiceProperties.getPath()))
             .uri(songServiceProperties.getUri())
         ).build();
-  }
-
-  private RedisRateLimiter redisRateLimiter(RateLimiterProperties properties) {
-    return new RedisRateLimiter(properties.getReplenishRate(), properties.getBurstCapacity(), properties.getRequestedTokens());
   }
 }

@@ -9,13 +9,13 @@ public class SongServiceProperties {
   private final String name;
   private final String path;
   private final String uri;
-  private final String deleteByResourceId;
+  private final String byResourceId;
 
-  public SongServiceProperties(String name, String path, String uri, String deleteByResourceId) {
+  public SongServiceProperties(String name, String path, String uri, String byResourceId) {
     this.name = name;
     this.path = path;
     this.uri = uri;
-    this.deleteByResourceId = deleteByResourceId;
+    this.byResourceId = byResourceId;
   }
 
   public String getName() {
@@ -30,7 +30,7 @@ public class SongServiceProperties {
     return uri;
   }
 
-  public String getDeleteByResourceId() {
-    return deleteByResourceId;
+  public String getByResourceId() {
+    return byResourceId;
   }
 }

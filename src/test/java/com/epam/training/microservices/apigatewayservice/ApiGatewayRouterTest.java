@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import kotlin.jvm.functions.Function1;
@@ -261,7 +262,7 @@ class ApiGatewayRouterTest {
   @Test
   void shouldThrowExceptionWhenDeleteResourceByEmptyIdsList(@Server(service = RESOURCE) MockServer resourceServiceServer) {
     resourceServiceServer.responseWithJson(HttpStatus.BAD_REQUEST, new APIError(HttpStatus.BAD_REQUEST,
-            "Invalid Request", new RuntimeException("For input string: \"\"")),
+            "Invalid request", new RuntimeException("For input string: \"\"")),
         Collections.singletonMap(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
 
     webTestClient.delete().uri(uriBuilder -> uriBuilder
@@ -273,7 +274,7 @@ class ApiGatewayRouterTest {
         .isBadRequest()
         .expectBody()
         .jsonPath("$.status").isEqualTo("BAD_REQUEST")
-        .jsonPath("$.message").isEqualTo("Invalid Request")
+        .jsonPath("$.message").isEqualTo("Invalid request")
         .jsonPath("$.debugMessage").isEqualTo("For input string: \"\"");
   }
 
@@ -311,6 +312,204 @@ class ApiGatewayRouterTest {
         .expectBody()
         .jsonPath("$.status").isEqualTo("INTERNAL_SERVER_ERROR")
         .jsonPath("$.message").value(containsString("Resource file deletion has failed"));
+  }
+
+  @Test
+  void shouldSaveSongRecord(@Server(service = SONG) MockServer songServiceServer) {
+    long id = 1233L;
+    songServiceServer.responseWithJson(HttpStatus.CREATED, Collections.singletonMap("id", id),
+        Collections.singletonMap(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
+
+    webTestClient.post().uri("/songs")
+        .bodyValue(buildSongMetadata())
+        .exchange()
+        .expectStatus().isCreated()
+        .expectBody()
+        .jsonPath("$.id").isEqualTo(id);
+  }
+
+  @Test
+  void shouldThrowValidationExceptionWhenSaveSongWithInvalidResourceId(@Server(service = SONG) MockServer songServiceServer) {
+    songServiceServer.responseWithJson(HttpStatus.BAD_REQUEST, new APIError(HttpStatus.BAD_REQUEST,
+            "Invalid request", new RuntimeException("Saving invalid song record")),
+        Collections.singletonMap(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
+
+    webTestClient.post().uri("/songs")
+        .contentType(MediaType.APPLICATION_JSON)
+        .bodyValue(buildInvalidSongMetadata())
+        .exchange()
+        .expectStatus().isBadRequest()
+        .expectBody()
+        .jsonPath("$.status").isEqualTo("BAD_REQUEST")
+        .jsonPath("$.message").isEqualTo("Invalid request")
+        .jsonPath("$.debugMessage").isEqualTo("Saving invalid song record");
+  }
+
+  private Map<String, Object> buildSongMetadata() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("resourceId", 123);
+    map.put("name", "Hello World");
+    map.put("length", "54:32");
+    map.put("album", "Tech");
+    map.put("artist", "artist");
+    map.put("year", 2009);
+
+    return map;
+  }
+
+  @Test
+  void shouldGetSongMetadata(@Server(service = SONG) MockServer songServiceServer) {
+    Map<String, Object> songMetadata = buildSongMetadata();
+    songMetadata.put("id", 123L);
+    songServiceServer.responseWithJson(HttpStatus.OK, songMetadata,
+        Collections.singletonMap(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
+
+    webTestClient.get().uri("/songs/{id}", 123L)
+        .accept(MediaType.APPLICATION_JSON)
+        .exchange()
+        .expectStatus()
+        .isOk()
+        .expectBody()
+        .jsonPath("$.id").isEqualTo(songMetadata.get("id"))
+        .jsonPath("$.resourceId").isEqualTo(songMetadata.get("resourceId"))
+        .jsonPath("$.name").isEqualTo(songMetadata.get("name"))
+        .jsonPath("$.length").isEqualTo(songMetadata.get("length"))
+        .jsonPath("$.album").isEqualTo(songMetadata.get("album"))
+        .jsonPath("$.artist").isEqualTo(songMetadata.get("artist"));
+  }
+  private Map<String, Object> buildInvalidSongMetadata() {
+    return Map.of(
+        "resourceId", -123L,
+        "name", "Hello World",
+        "length", "54:32",
+        "album", "Tech",
+        "artist", "artist",
+        "year", 2090
+    );
+  }
+
+  @Test
+  void shouldThrowExceptionWhenGetSongMetadata(@Server(service = SONG) MockServer songServiceServer) {
+    songServiceServer.responseWithJson(HttpStatus.NOT_FOUND, new APIError(HttpStatus.NOT_FOUND,
+            "Song metadata is not found", new RuntimeException("Song is not found with id '124567'")),
+        Collections.singletonMap(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
+
+    webTestClient.get().uri("/songs/{id}", 124567L)
+        .accept(MediaType.APPLICATION_JSON)
+        .exchange()
+        .expectStatus()
+        .isNotFound()
+        .expectBody()
+        .jsonPath("$.status").isEqualTo("NOT_FOUND")
+        .jsonPath("$.message").isEqualTo("Song metadata is not found")
+        .jsonPath("$.debugMessage").isEqualTo("Song is not found with id '124567'");
+  }
+
+  @Test
+  void shouldDeleteSongMetadataById(@Server(service = SONG) MockServer songServiceServer) {
+    long[] songMetadataIds = {100L, 101L};
+    List<Map<String, Object>> songRecords = new ArrayList<>();
+    long resourceId1 = 1L;
+    songRecords.add(Map.of("id", songMetadataIds[0], "resourceId", resourceId1));
+    long resourceId2 = 2L;
+    songRecords.add(Map.of("id", songMetadataIds[1], "resourceId", resourceId2));
+    songServiceServer.responseWithJson(HttpStatus.OK, songRecords,
+        Collections.singletonMap(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
+
+    webTestClient.delete().uri(uriBuilder -> uriBuilder
+            .path("/songs")
+            .queryParam("id", songMetadataIds[0] + "," + songMetadataIds[1])
+            .build())
+        .exchange()
+        .expectStatus()
+        .isOk()
+        .expectBody()
+        .jsonPath("$[*].id").value(containsInAnyOrder(
+            is((int) songMetadataIds[0]),
+            is((int) songMetadataIds[1])))
+        .jsonPath("$[*].resourceId").value(containsInAnyOrder(
+            is((int) resourceId1),
+            is((int) resourceId2)));
+  }
+
+  @Test
+  void shouldReturnEmptyWhenDeleteSongMetadataByNegativeResourceIds(@Server(service = SONG) MockServer songServiceServer) {
+    songServiceServer.responseWithJson(HttpStatus.OK, Collections.emptyList(),
+        Collections.singletonMap(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
+
+    webTestClient.delete().uri(uriBuilder -> uriBuilder.path("/songs/by-resource-id").queryParam("id", "-1,-3").build())
+        .exchange()
+        .expectStatus()
+        .isOk();
+  }
+
+  @Test
+  void shouldReturnEmptyWhenDeleteSongMetadataByNegativeIds(@Server(service = SONG) MockServer songServiceServer) {
+    songServiceServer.responseWithJson(HttpStatus.OK, Collections.emptyList(),
+        Collections.singletonMap(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
+    webTestClient.delete().uri(uriBuilder -> uriBuilder.path("/songs").queryParam("id", "-1,-3").build())
+        .exchange()
+        .expectStatus()
+        .isOk();
+  }
+
+  @Test
+  void shouldThrowErrorWhenDeleteSongMetadataByEmptyId(@Server(service = SONG) MockServer songServiceServer) {
+    songServiceServer.responseWithJson(HttpStatus.BAD_REQUEST, new APIError(HttpStatus.BAD_REQUEST,
+            "Invalid request", new RuntimeException("For input string: \"\"")),
+        Collections.singletonMap(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
+
+    webTestClient.delete().uri(uriBuilder -> uriBuilder.path("/songs").queryParam("id", "").build())
+        .exchange()
+        .expectStatus()
+        .isBadRequest()
+        .expectBody()
+        .jsonPath("$.status").isEqualTo("BAD_REQUEST")
+        .jsonPath("$.message").isEqualTo("Invalid request")
+        .jsonPath("$.debugMessage").isEqualTo("For input string: \"\"");
+  }
+
+  @Test
+  void shouldDeleteSongMetadataByResourceId(@Server(service = SONG) MockServer songServiceServer) {
+    long[] songMetadataIds = {100L, 101L};
+    List<Map<String, Object>> songRecords = new ArrayList<>();
+    long resourceId1 = 1L;
+    songRecords.add(Map.of("id", songMetadataIds[0], "resourceId", resourceId1));
+    long resourceId2 = 2L;
+    songRecords.add(Map.of("id", songMetadataIds[1], "resourceId", resourceId2));
+    songServiceServer.responseWithJson(HttpStatus.OK, songRecords,
+        Collections.singletonMap(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
+
+    webTestClient.delete().uri(uriBuilder -> uriBuilder
+            .path("/songs/by-resource-id")
+            .queryParam("id", resourceId1 + "," + resourceId2)
+            .build())
+        .exchange()
+        .expectStatus()
+        .isOk()
+        .expectBody()
+        .jsonPath("$[*].id").value(containsInAnyOrder(
+            is((int) songMetadataIds[0]),
+            is((int) songMetadataIds[1])))
+        .jsonPath("$[*].resourceId").value(containsInAnyOrder(
+            is((int) resourceId1),
+            is((int) resourceId2)));
+  }
+
+  @Test
+  void shouldThrowErrorWhenDeleteSongMetadataByEmptyResourceId(@Server(service = SONG) MockServer songServiceServer) {
+    songServiceServer.responseWithJson(HttpStatus.BAD_REQUEST, new APIError(HttpStatus.BAD_REQUEST,
+            "Invalid request", new RuntimeException("For input string: \"\"")),
+        Collections.singletonMap(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
+
+    webTestClient.delete().uri(uriBuilder -> uriBuilder.path("/songs/by-resource-id").queryParam("id", "").build())
+        .exchange()
+        .expectStatus()
+        .isBadRequest()
+        .expectBody()
+        .jsonPath("$.status").isEqualTo("BAD_REQUEST")
+        .jsonPath("$.message").isEqualTo("Invalid request")
+        .jsonPath("$.debugMessage").isEqualTo("For input string: \"\"");
   }
 
   private Buffer fileBuffer() throws IOException {
