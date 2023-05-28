@@ -2,18 +2,16 @@ package com.epam.training.microservices.apigatewayservice.configuration;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.cloud.client.loadbalancer.reactive.ReactorLoadBalancerExchangeFilterFunction;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.cloud.gateway.filter.ratelimit.KeyResolver;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
-@Configuration
+@TestConfiguration
 @EnableConfigurationProperties(value = {ResourceServiceProperties.class, SongServiceProperties.class, RateLimiterProperties.class})
 public class GatewayConfiguration {
-
-  @Value("${api-gateway.service.uri}")
+  @Value("${song.service.uri}")
   private String baseUrl;
 
   @Bean
@@ -22,10 +20,9 @@ public class GatewayConfiguration {
   }
 
   @Bean
-  public WebClient webClient(ReactorLoadBalancerExchangeFilterFunction loadBalancerExchangeFilterFunction) {
+  public WebClient webClient() {
     return WebClient.builder()
         .baseUrl(baseUrl)
-        .filter(loadBalancerExchangeFilterFunction)
         .build();
   }
 }
