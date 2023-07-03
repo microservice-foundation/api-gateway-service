@@ -15,6 +15,13 @@ resource:
     path: /api/v1/resources
     uri: lb://${resource.service.name}
 
+# storage service configuration
+storage:
+  service:
+    name: ${STORAGE_SERVICE_NAME:STORAGE-SERVICE}
+    path: /api/v1/storages
+    uri: lb://${storage.service.name}
+
 # rate limiter configuration
 rate-limiter:
   replenishRate: 10    # how many requests per second you want a user to be allowed to do

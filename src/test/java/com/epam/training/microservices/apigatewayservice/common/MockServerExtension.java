@@ -2,10 +2,10 @@ package com.epam.training.microservices.apigatewayservice.common;
 
 import static com.epam.training.microservices.apigatewayservice.common.Server.Service.RESOURCE;
 import static com.epam.training.microservices.apigatewayservice.common.Server.Service.SONG;
+import static com.epam.training.microservices.apigatewayservice.common.Server.Service.STORAGE;
 
 import java.io.IOException;
 import java.lang.reflect.Parameter;
-import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -54,9 +54,13 @@ public class MockServerExtension implements BeforeAllCallback, BeforeEachCallbac
     String songServicePort = properties.getProperty("song.service.port");
     MockServer songMockServer = MockServer.newInstance(Integer.parseInt(songServicePort));
 
+    String storageServicePort = properties.getProperty("storage.service.port");
+    MockServer storageMockServer = MockServer.newInstance(Integer.parseInt(storageServicePort));
+
     serverMap = new HashMap<>();
     serverMap.put(RESOURCE, resourceMockServer);
     serverMap.put(SONG, songMockServer);
+    serverMap.put(STORAGE, storageMockServer);
   }
 
   private Properties loadApplicationProperties() throws IOException {

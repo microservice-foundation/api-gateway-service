@@ -2,6 +2,7 @@ package com.epam.training.microservices.apigatewayservice;
 
 import static com.epam.training.microservices.apigatewayservice.common.Server.Service.RESOURCE;
 import static com.epam.training.microservices.apigatewayservice.common.Server.Service.SONG;
+import static com.epam.training.microservices.apigatewayservice.common.Server.Service.STORAGE;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
@@ -19,6 +20,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import kotlin.jvm.functions.Function1;
 import okio.Buffer;
 import okio.Okio;
@@ -512,6 +514,158 @@ class ApiGatewayRouterTest {
         .jsonPath("$.debugMessage").isEqualTo("For input string: \"\"");
   }
 
+  @Test
+  void shouldGetAllStagingStoragesByType(@Server(service = STORAGE) MockServer storageServiceServer) {
+    Map<String, Object> storage1 = buildStorage(StorageType.STAGING);
+    Map<String, Object> storage2 = buildStorage(StorageType.STAGING);
+    storageServiceServer.responseWithJson(HttpStatus.OK, List.of(storage1, storage2),
+        Collections.singletonMap(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
+
+    webTestClient.get().uri(uriBuilder -> uriBuilder
+        .path("/storages")
+        .queryParam("type", StorageType.STAGING)
+        .build())
+        .exchange()
+        .expectStatus().isOk()
+        .expectBody()
+        .jsonPath("$[*].id").value(containsInAnyOrder(storage1.get("id"), storage2.get("id")))
+        .jsonPath("$[*].bucket").value(containsInAnyOrder(storage1.get("bucket"), storage2.get("bucket")))
+        .jsonPath("$[*].type").value(containsInAnyOrder(storage1.get("type"), storage2.get("type")))
+        .jsonPath("$[*].path").value(containsInAnyOrder(storage1.get("path"), storage2.get("path")));
+
+    Map<String, Object> storage3 = buildStorage(StorageType.PERMANENT);
+    Map<String, Object> storage4 = buildStorage(StorageType.PERMANENT);
+    storageServiceServer.responseWithJson(HttpStatus.OK, List.of(storage3, storage4),
+        Collections.singletonMap(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
+
+    webTestClient.get().uri(uriBuilder -> uriBuilder
+            .path("/storages")
+            .queryParam("type", StorageType.PERMANENT)
+            .build())
+        .exchange()
+        .expectStatus().isOk()
+        .expectBody()
+        .jsonPath("$[*].id").value(containsInAnyOrder(storage3.get("id"), storage4.get("id")))
+        .jsonPath("$[*].bucket").value(containsInAnyOrder(storage3.get("bucket"), storage4.get("bucket")))
+        .jsonPath("$[*].type").value(containsInAnyOrder(storage3.get("type"), storage4.get("type")))
+        .jsonPath("$[*].path").value(containsInAnyOrder(storage3.get("path"), storage4.get("path")));
+  }
+
+  @Test
+  void shouldThrowNotFoundExceptionWhenGetStoragesByType(@Server(service = STORAGE) MockServer storageServiceServer) {
+    StorageType stagingType = StorageType.STAGING;
+    storageServiceServer.responseWithJson(HttpStatus.NOT_FOUND, new APIError(HttpStatus.NOT_FOUND,
+            "Storage is not found", new RuntimeException(String.format("Storage is not found by type '%s'", stagingType))),
+        Collections.singletonMap(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
+
+    webTestClient.get().uri(uriBuilder -> uriBuilder
+            .path("/storages")
+            .queryParam("type", StorageType.PERMANENT)
+            .build())
+        .accept(MediaType.APPLICATION_JSON)
+        .exchange()
+        .expectStatus()
+        .isNotFound()
+        .expectBody()
+        .jsonPath("$.status").isEqualTo("NOT_FOUND")
+        .jsonPath("$.message").isEqualTo("Storage is not found")
+        .jsonPath("$.debugMessage").isEqualTo(String.format("Storage is not found by type '%s'", stagingType));
+
+    StorageType permanentType = StorageType.PERMANENT;
+    storageServiceServer.responseWithJson(HttpStatus.NOT_FOUND, new APIError(HttpStatus.NOT_FOUND,
+            "Storage is not found", new RuntimeException(String.format("Storage is not found by type '%s'", permanentType))),
+        Collections.singletonMap(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
+
+    webTestClient.get().uri(uriBuilder -> uriBuilder
+            .path("/storages")
+            .queryParam("type", StorageType.PERMANENT)
+            .build())
+        .accept(MediaType.APPLICATION_JSON)
+        .exchange()
+        .expectStatus()
+        .isNotFound()
+        .expectBody()
+        .jsonPath("$.status").isEqualTo("NOT_FOUND")
+        .jsonPath("$.message").isEqualTo("Storage is not found")
+        .jsonPath("$.debugMessage").isEqualTo(String.format("Storage is not found by type '%s'", permanentType));
+  }
+
+  @Test
+  void shouldGetStorageById(@Server(service = STORAGE) MockServer storageServiceServer) {
+    Map<String, Object> storage1 = buildStorage(StorageType.STAGING);
+    storageServiceServer.responseWithJson(HttpStatus.OK, storage1,
+        Collections.singletonMap(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
+
+    webTestClient.get().uri("/storages/{id}", storage1.get("id"))
+        .accept(MediaType.APPLICATION_JSON)
+        .exchange()
+        .expectStatus()
+        .isOk()
+        .expectBody()
+        .jsonPath("$.id").isEqualTo(storage1.get("id"))
+        .jsonPath("$.bucket").isEqualTo(storage1.get("bucket"))
+        .jsonPath("$.path").isEqualTo(storage1.get("path"))
+        .jsonPath("$.type").isEqualTo(storage1.get("type"));
+
+    Map<String, Object> storage2 = buildStorage(StorageType.PERMANENT);
+    storageServiceServer.responseWithJson(HttpStatus.OK, storage2,
+        Collections.singletonMap(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
+
+    webTestClient.get().uri("/storages/{id}", storage2.get("id"))
+        .accept(MediaType.APPLICATION_JSON)
+        .exchange()
+        .expectStatus()
+        .isOk()
+        .expectBody()
+        .jsonPath("$.id").isEqualTo(storage2.get("id"))
+        .jsonPath("$.bucket").isEqualTo(storage2.get("bucket"))
+        .jsonPath("$.path").isEqualTo(storage2.get("path"))
+        .jsonPath("$.type").isEqualTo(storage2.get("type"));
+  }
+
+  @Test
+  void shouldThrowNotFoundExceptionWhenGetStorageById(@Server(service = STORAGE) MockServer storageServiceServer) {
+    long id1 = 123_234_533L;
+    storageServiceServer.responseWithJson(HttpStatus.NOT_FOUND, new APIError(HttpStatus.NOT_FOUND,
+            "Storage is not found", new RuntimeException(String.format("Storage is not found with id '%d'", id1))),
+        Collections.singletonMap(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
+
+    webTestClient.get().uri("/storages/{id}", id1)
+        .accept(MediaType.APPLICATION_JSON)
+        .exchange()
+        .expectStatus()
+        .isNotFound()
+        .expectBody()
+        .jsonPath("$.status").isEqualTo("NOT_FOUND")
+        .jsonPath("$.message").isEqualTo("Storage is not found")
+        .jsonPath("$.debugMessage").isEqualTo(String.format("Storage is not found with id '%d'", id1));
+
+    long id2 = 123_234_512L;
+    storageServiceServer.responseWithJson(HttpStatus.NOT_FOUND, new APIError(HttpStatus.NOT_FOUND,
+            "Storage is not found", new RuntimeException("Something bad happened during bucket head request")),
+        Collections.singletonMap(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
+
+    webTestClient.get().uri("/storages/{id}", id2)
+        .accept(MediaType.APPLICATION_JSON)
+        .exchange()
+        .expectStatus()
+        .isNotFound()
+        .expectBody()
+        .jsonPath("$.status").isEqualTo("NOT_FOUND")
+        .jsonPath("$.message").isEqualTo("Storage is not found")
+        .jsonPath("$.debugMessage").isEqualTo("Something bad happened during bucket head request");
+  }
+
+  private Map<String, Object> buildStorage(StorageType type) {
+    int id = new Random().nextInt(1000);
+    return Map.of(
+        "id", id,
+        "bucket", type.name().toLowerCase() + "-bucket" + id,
+        "path", "files/",
+        "type", type.name()
+    );
+  }
+
   private Buffer fileBuffer() throws IOException {
     File file = testFile();
     Buffer buffer = Okio.buffer(Okio.source(file)).getBuffer();
@@ -532,5 +686,10 @@ class ApiGatewayRouterTest {
       Files.copy(file.toPath(), testFile.toPath());
     }
     return testFile;
+  }
+
+  private enum StorageType {
+    PERMANENT,
+    STAGING;
   }
 }

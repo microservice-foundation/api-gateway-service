@@ -1,12 +1,10 @@
 package com.epam.training.microservices.apigatewayservice.configuration;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.context.properties.ConstructorBinding;
 
-@ConfigurationProperties(prefix = ResourceServiceProperties.PREFIX)
-@ConstructorBinding
-public class ResourceServiceProperties {
-  public static final String PREFIX = "resource.service";
+@ConfigurationProperties(prefix = StorageServiceProperties.PREFIX)
+public class StorageServiceProperties {
+  public static final String PREFIX = "storage.service";
   private String name;
   private String path;
   private String uri;
@@ -15,20 +13,20 @@ public class ResourceServiceProperties {
     return name;
   }
 
-  public String getPath() {
-    return path;
-  }
-
-  public String getUri() {
-    return uri;
-  }
-
   public void setName(String name) {
     this.name = name;
   }
 
+  public String getPath() {
+    return path;
+  }
+
   public void setPath(String path) {
     this.path = path;
+  }
+
+  public String getUri() {
+    return uri;
   }
 
   public void setUri(String uri) {

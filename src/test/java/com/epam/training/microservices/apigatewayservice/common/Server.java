@@ -15,6 +15,7 @@ public @interface Server {
   enum Service {
     RESOURCE,
     SONG,
+    STORAGE,
     NONE
   }
 }
