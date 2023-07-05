@@ -15,7 +15,8 @@ import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 
 @Component
-@EnableConfigurationProperties(value = {ResourceServiceProperties.class, SongServiceProperties.class, RateLimiterProperties.class})
+@EnableConfigurationProperties(value = {ResourceServiceProperties.class, SongServiceProperties.class, StorageServiceProperties.class,
+    RateLimiterProperties.class})
 public class Router {
 
   //TODO: security and key resolver should be implemented
@@ -117,7 +118,7 @@ public class Router {
                     config -> config.setReplenishRate(rateLimiterProperties.getReplenishRate())
                         .setBurstCapacity(rateLimiterProperties.getBurstCapacity())
                         .setRequestedTokens(rateLimiterProperties.getRequestedTokens())).and()
-                .setPath(songServiceProperties.getPath()))
+                .setPath(songServiceProperties.getPath() + songServiceProperties.getByResourceId()))
             .uri(songServiceProperties.getUri())
         )
         .route("get-storages-by-type", route -> route

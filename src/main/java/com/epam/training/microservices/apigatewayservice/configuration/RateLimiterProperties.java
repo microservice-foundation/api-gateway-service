@@ -1,20 +1,13 @@
 package com.epam.training.microservices.apigatewayservice.configuration;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.context.properties.ConstructorBinding;
 
-@ConfigurationProperties(prefix = "rate-limiter")
-@ConstructorBinding
+@ConfigurationProperties(prefix = RateLimiterProperties.PREFIX)
 public class RateLimiterProperties {
-  private final int replenishRate;
-  private final int burstCapacity;
-  private final int requestedTokens;
-
-  public RateLimiterProperties(int replenishRate, int burstCapacity, int requestedTokens) {
-    this.replenishRate = replenishRate;
-    this.burstCapacity = burstCapacity;
-    this.requestedTokens = requestedTokens;
-  }
+  public static final String PREFIX = "rate-limiter";
+  private int replenishRate;
+  private int burstCapacity;
+  private int requestedTokens;
 
   public int getReplenishRate() {
     return replenishRate;
@@ -26,5 +19,17 @@ public class RateLimiterProperties {
 
   public int getRequestedTokens() {
     return requestedTokens;
+  }
+
+  public void setReplenishRate(int replenishRate) {
+    this.replenishRate = replenishRate;
+  }
+
+  public void setBurstCapacity(int burstCapacity) {
+    this.burstCapacity = burstCapacity;
+  }
+
+  public void setRequestedTokens(int requestedTokens) {
+    this.requestedTokens = requestedTokens;
   }
 }
