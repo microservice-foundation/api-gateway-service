@@ -1,22 +1,14 @@
 package com.epam.training.microservices.apigatewayservice.configuration;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.context.properties.ConstructorBinding;
 
-@ConfigurationProperties(prefix = "song.service")
-@ConstructorBinding
+@ConfigurationProperties(prefix = SongServiceProperties.PREFIX)
 public class SongServiceProperties {
-  private final String name;
-  private final String path;
-  private final String uri;
-  private final String byResourceId;
-
-  public SongServiceProperties(String name, String path, String uri, String byResourceId) {
-    this.name = name;
-    this.path = path;
-    this.uri = uri;
-    this.byResourceId = byResourceId;
-  }
+  public static final String PREFIX = "song.service";
+  private String name;
+  private String path;
+  private String uri;
+  private String byResourceId;
 
   public String getName() {
     return name;
@@ -32,5 +24,21 @@ public class SongServiceProperties {
 
   public String getByResourceId() {
     return byResourceId;
+  }
+
+  public void setName(String name) {
+    this.name = name;
+  }
+
+  public void setPath(String path) {
+    this.path = path;
+  }
+
+  public void setUri(String uri) {
+    this.uri = uri;
+  }
+
+  public void setByResourceId(String byResourceId) {
+    this.byResourceId = byResourceId;
   }
 }

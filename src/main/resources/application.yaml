@@ -15,8 +15,18 @@ resource:
     path: /api/v1/resources
     uri: lb://${resource.service.name}
 
+# storage service configuration
+storage:
+  service:
+    name: ${STORAGE_SERVICE_NAME:STORAGE-SERVICE}
+    path: /api/v1/storages
+    uri: lb://${storage.service.name}
+
 # rate limiter configuration
 rate-limiter:
   replenishRate: 10    # how many requests per second you want a user to be allowed to do
   burstCapacity: 20    # the maximum number of requests a user is allowed to do in a single second.
   requestedTokens: 1   # how many tokens a request costs. This is the number of tokens taken from the bucket for each request and defaults to 1.
+
+# application configuration
+logging.level.root: DEBUG

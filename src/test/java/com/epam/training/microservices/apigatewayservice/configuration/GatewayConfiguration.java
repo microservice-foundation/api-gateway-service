@@ -9,7 +9,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 @TestConfiguration
-@EnableConfigurationProperties(value = {ResourceServiceProperties.class, SongServiceProperties.class, RateLimiterProperties.class})
+@EnableConfigurationProperties(value = {ResourceServiceProperties.class, SongServiceProperties.class, StorageServiceProperties.class,
+    RateLimiterProperties.class})
 public class GatewayConfiguration {
   @Value("${song.service.uri}")
   private String baseUrl;

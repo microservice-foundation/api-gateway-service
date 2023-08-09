@@ -12,7 +12,6 @@ import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.cloud.gateway.filter.factory.rewrite.ModifyResponseBodyGatewayFilterFactory;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -53,21 +52,21 @@ public class DeleteSongMetadataGatewayFilterFactory extends AbstractGatewayFilte
         }));
   }
 
-  private Mono<Object> deleteSongMetadataByResourceIds(Config config, String resourceIds,
-      List<Map<String, Object>> resourceRecords) {
+  private Mono<Object> deleteSongMetadataByResourceIds(Config config, String resourceIds, List<Map<String, Object>> resourceRecords) {
+    log.info("Sending a request to delete song records by resource ids '{}'", resourceIds);
     return webClient.delete()
         .uri(uriBuilder -> uriBuilder
             .path(config.resourcePath)
             .queryParam(config.queryParam, resourceIds)
             .build())
-        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+        .accept(MediaType.APPLICATION_JSON)
         .exchangeToMono(clientResponse -> clientResponse.bodyToMono(new ParameterizedTypeReference<List<Map<String, Object>>>() {})
             .map(songRecords -> mapSongRecordToResourceRecord(songRecords, resourceRecords)));
   }
 
   private List<Map<String, Object>> mapSongRecordToResourceRecord(List<Map<String, Object>> songRecords,
       List<Map<String, Object>> resourceRecords) {
-
+    log.info("Deleted song records: {}", songRecords);
     Map<Integer, Map<String, Object>> songRecordEntries = songRecords.stream()
         .collect(Collectors.toMap(pr -> (int) pr.get(FIELD_RESOURCE_ID), pr -> pr, (a, b) -> a, () -> new HashMap<>(songRecords.size())));
 
