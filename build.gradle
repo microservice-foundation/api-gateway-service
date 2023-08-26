@@ -6,6 +6,7 @@ plugins {
 
 group 'com.epam.training'
 version '1.0'
+sourceCompatibility = '17'
 
 repositories {
     mavenCentral()

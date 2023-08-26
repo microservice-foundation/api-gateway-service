@@ -28,4 +28,8 @@ eureka:
     lease-renewal-interval-in-seconds: 10
 
 spring.redis.host: ${REDIS_HOST:localhost}
-management.endpoints.web.exposure.include: health, info, refresh
+management:
+  endpoints.web.exposure.include: health, info, refresh
+  tracing:
+    sampling.probability: 1.0
+    propagation.type: b3

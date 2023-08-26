@@ -13,6 +13,7 @@ import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFac
 import org.springframework.cloud.gateway.filter.factory.rewrite.ModifyResponseBodyGatewayFilterFactory;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -40,7 +41,7 @@ public class DeleteSongMetadataGatewayFilterFactory extends AbstractGatewayFilte
   public GatewayFilter apply(DeleteSongMetadataGatewayFilterFactory.Config config) {
     return modifyResponseBodyGatewayFilterFactory.apply(c -> c.setRewriteFunction(Object.class, Object.class,
         (serverWebExchange, response) -> {
-          HttpStatus statusCode = serverWebExchange.getResponse().getStatusCode();
+          HttpStatusCode statusCode = serverWebExchange.getResponse().getStatusCode();
           log.info("Processing response body with status code {}", statusCode);
           if (statusCode != null && statusCode.isError()) {
             return Mono.just(response);
