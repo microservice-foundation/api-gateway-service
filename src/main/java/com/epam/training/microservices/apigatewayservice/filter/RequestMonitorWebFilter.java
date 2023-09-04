@@ -21,10 +21,6 @@ public class RequestMonitorWebFilter implements WebFilter {
   public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
     final long startTime = System.currentTimeMillis();
     return chain.filter(exchange)
-        .contextWrite(context -> {
-          ContextSnapshotFactory.builder().build().setThreadLocalsFrom(context, ObservationThreadLocalAccessor.KEY);
-          return context;
-        })
         .doFinally(signalType -> {
           final long endTime = System.currentTimeMillis();
           final long executionTime = endTime - startTime;
