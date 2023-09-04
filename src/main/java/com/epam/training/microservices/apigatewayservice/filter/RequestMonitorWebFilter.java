@@ -2,9 +2,7 @@ package com.epam.training.microservices.apigatewayservice.filter;
 
 import static java.util.Optional.ofNullable;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.micrometer.context.ContextSnapshot;
+import io.micrometer.context.ContextSnapshotFactory;
 import io.micrometer.observation.contextpropagation.ObservationThreadLocalAccessor;
 import java.util.List;
 import org.slf4j.Logger;
@@ -23,55 +21,15 @@ public class RequestMonitorWebFilter implements WebFilter {
   public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
     final long startTime = System.currentTimeMillis();
     return chain.filter(exchange)
-
-//         !! IMPORTANT STEP !!
-//         Preparing context for the Tracer Span used in TracerConfiguration
         .contextWrite(context -> {
-          ContextSnapshot.setThreadLocalsFrom(context, ObservationThreadLocalAccessor.KEY);
+          ContextSnapshotFactory.builder().build().setThreadLocalsFrom(context, ObservationThreadLocalAccessor.KEY);
           return context;
         })
-
-//         Logging the metrics for the API call, not really required to have this section for tracing setup
         .doFinally(signalType -> {
-          long endTime = System.currentTimeMillis();
-          long executionTime = endTime - startTime;
-
-
-//          Extracting traceId added in TracerConfiguration Webfilter bean
+          final long endTime = System.currentTimeMillis();
+          final long executionTime = endTime - startTime;
           final List<String> traceIds = ofNullable(exchange.getResponse().getHeaders().get("traceId")).orElseGet(List::of);
-          final MetricsLogTemplate metricsLogTemplate = new MetricsLogTemplate(
-              String.join(",", traceIds),
-              exchange.getLogPrefix().trim(),
-              executionTime);
-          try {
-            log.info(new ObjectMapper().writeValueAsString(metricsLogTemplate));
-          } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-          }
+          log.info("Request completed, execution time: {}, log prefix: {}, trace id: {}.", executionTime, exchange.getLogPrefix(), traceIds);
         });
-  }
-
-  private static final class MetricsLogTemplate {
-    private final String traceId;
-    private final String logPrefix;
-    private final long executionTime;
-
-    public MetricsLogTemplate(String traceId, String logPrefix, long executionTime) {
-      this.traceId = traceId;
-      this.logPrefix = logPrefix;
-      this.executionTime = executionTime;
-    }
-
-    public String getTraceId() {
-      return traceId;
-    }
-
-    public String getLogPrefix() {
-      return logPrefix;
-    }
-
-    public long getExecutionTime() {
-      return executionTime;
-    }
   }
 }
