@@ -2,8 +2,6 @@ package com.epam.training.microservices.apigatewayservice.filter;
 
 import static java.util.Optional.ofNullable;
 
-import io.micrometer.context.ContextSnapshotFactory;
-import io.micrometer.observation.contextpropagation.ObservationThreadLocalAccessor;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
