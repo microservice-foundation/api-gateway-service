@@ -1,9 +1,9 @@
-FROM alpine:3.14 as base
+FROM alpine:3.17.3 as base
 MAINTAINER Yusuf Murodov "yusuf.murodov1@gmail.com"
 WORKDIR /app
 RUN apk update \
   && apk upgrade \
-  && apk add --update openjdk11 tzdata curl unzip bash \
+  && apk add --update --no-cache openjdk17 tzdata curl unzip bash \
   && rm -rf /var/cache/apk/*
 COPY . /app
 RUN chmod +x ./gradlew \
@@ -15,6 +15,6 @@ CMD ["./gradlew", "bootRun", "-Dspring.profiles.active=dev", "-Dspring-boot.run.
 FROM base as build
 RUN ./gradlew jar
 
-FROM openjdk:11-jre-slim as production
+FROM openjdk:17 as production
 COPY --from=build /app/build/libs/api-gateway-service-*.jar /api-gateway-service.jar
 CMD ["java", "-Dspring.profiles.active=prod", "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:8001", "-jar", "/api-gateway-service.jar"]

@@ -12,6 +12,7 @@ spring:
         initial-interval: 10000
         max-interval: 60000
         max-attempts: 20
+  data.redis.host: ${REDIS_HOST:localhost}
 
 eureka:
   client:
@@ -27,7 +28,6 @@ eureka:
     preferIpAddress: true
     lease-renewal-interval-in-seconds: 10
 
-spring.redis.host: ${REDIS_HOST:localhost}
 management:
   endpoints.web.exposure.include: health, info, refresh
   tracing:
