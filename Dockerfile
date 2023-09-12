@@ -10,7 +10,7 @@ RUN chmod +x ./gradlew \
   && ./gradlew build -x test
 
 FROM base as development
-CMD ["./gradlew", "bootRun", "-Dspring.profiles.active=dev", "-Dspring-boot.run.jvmArguments='-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:8001'"]
+CMD ["./gradlew", "bootRun", "-Dspring-boot.run.fork=false", "-Dspring.profiles.active=dev", "-Dspring-boot.run.jvmArguments='-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:8001'"]
 
 FROM base as build
 RUN ./gradlew jar

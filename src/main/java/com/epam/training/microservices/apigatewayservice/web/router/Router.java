@@ -1,11 +1,10 @@
-package com.epam.training.microservices.apigatewayservice.router;
+package com.epam.training.microservices.apigatewayservice.web.router;
 
 import com.epam.training.microservices.apigatewayservice.configuration.RateLimiterProperties;
 import com.epam.training.microservices.apigatewayservice.configuration.ResourceServiceProperties;
 import com.epam.training.microservices.apigatewayservice.configuration.SongServiceProperties;
 import com.epam.training.microservices.apigatewayservice.configuration.StorageServiceProperties;
-import com.epam.training.microservices.apigatewayservice.filter.DeleteSongMetadataGatewayFilterFactory;
-import io.micrometer.observation.annotation.Observed;
+import com.epam.training.microservices.apigatewayservice.web.filter.DeleteSongMetadataGatewayFilterFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cloud.gateway.filter.ratelimit.RedisRateLimiter;

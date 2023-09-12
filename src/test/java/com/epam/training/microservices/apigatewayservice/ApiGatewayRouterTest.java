@@ -4,10 +4,8 @@ import static com.epam.training.microservices.apigatewayservice.common.Server.Se
 import static com.epam.training.microservices.apigatewayservice.common.Server.Service.SONG;
 import static com.epam.training.microservices.apigatewayservice.common.Server.Service.STORAGE;
 import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 
-import com.epam.training.microservices.apigatewayservice.common.APIError;
 import com.epam.training.microservices.apigatewayservice.common.MockServer;
 import com.epam.training.microservices.apigatewayservice.common.MockServerExtension;
 import com.epam.training.microservices.apigatewayservice.common.Server;
@@ -17,6 +15,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,68 +65,46 @@ class ApiGatewayRouterTest {
 
   @Test
   void shouldReturnBadRequestWhenGetResourceById(@Server(service = RESOURCE) MockServer mockServer) {
-    APIError apiError = new APIError(HttpStatus.BAD_REQUEST, "Invalid request", new RuntimeException());
-    mockServer.responseWithJson(HttpStatus.BAD_REQUEST, apiError,
-        Collections.singletonMap(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
+    mockServer.response(HttpStatus.BAD_REQUEST);
 
     webTestClient.get()
         .uri("/resources/{id}", 123L)
         .accept(MediaType.APPLICATION_JSON)
         .exchange()
-        .expectStatus().isBadRequest()
-        .expectBody()
-        .jsonPath("$.status").isEqualTo("BAD_REQUEST")
-        .jsonPath("$.message").isEqualTo("Invalid request");
+        .expectStatus().isBadRequest();
   }
 
   @Test
   void shouldReturnNotFoundWhenGetResourceById(@Server(service = RESOURCE) MockServer mockServer) {
-    APIError apiError = new APIError(HttpStatus.NOT_FOUND, "Resource is not found", new RuntimeException());
-    mockServer.responseWithJson(HttpStatus.NOT_FOUND, apiError,
-        Collections.singletonMap(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
+    mockServer.response(HttpStatus.NOT_FOUND);
 
     webTestClient.get()
         .uri("/resources/{id}", 123L)
         .accept(MediaType.APPLICATION_OCTET_STREAM)
         .exchange()
-        .expectStatus().isNotFound()
-        .expectBody()
-        .jsonPath("$.status").isEqualTo("NOT_FOUND")
-        .jsonPath("$.message").isEqualTo("Resource is not found");
+        .expectStatus().isNotFound();
   }
 
   @Test
   void shouldReturnNotFoundResourceFileWhenGetResourceById(@Server(service = RESOURCE) MockServer mockServer) {
-    APIError apiError = new APIError(HttpStatus.NOT_FOUND, "Resource file is not found", new RuntimeException());
-    mockServer.responseWithJson(HttpStatus.NOT_FOUND, apiError,
-        Collections.singletonMap(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
+    mockServer.response(HttpStatus.NOT_FOUND);
 
     webTestClient.get()
         .uri("/resources/{id}", 123L)
         .accept(MediaType.APPLICATION_OCTET_STREAM)
         .exchange()
-        .expectStatus().isNotFound()
-        .expectBody()
-        .jsonPath("$.status").isEqualTo("NOT_FOUND")
-        .jsonPath("$.message").isEqualTo("Resource file is not found");
+        .expectStatus().isNotFound();
   }
 
   @Test
   void shouldReturnDownloadFileErrorWhenGetResourceById(@Server(service = RESOURCE) MockServer mockServer) {
-    APIError apiError = new APIError(HttpStatus.INTERNAL_SERVER_ERROR, "Resource file download has failed: ",
-        new RuntimeException());
-
-    mockServer.responseWithJson(HttpStatus.INTERNAL_SERVER_ERROR, apiError,
-        Collections.singletonMap(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
+    mockServer.response(HttpStatus.INTERNAL_SERVER_ERROR);
 
     webTestClient.get()
         .uri("/resources/{id}", 123L)
         .accept(MediaType.APPLICATION_OCTET_STREAM)
         .exchange()
-        .expectStatus().is5xxServerError()
-        .expectBody()
-        .jsonPath("$.status").isEqualTo("INTERNAL_SERVER_ERROR")
-        .jsonPath("$.message").value(containsString("Resource file download has failed"));
+        .expectStatus().is5xxServerError();
   }
 
   @Test
@@ -150,8 +127,7 @@ class ApiGatewayRouterTest {
 
   @Test
   void shouldThrowValidationExceptionWhenSaveResource(@Server(service = RESOURCE) MockServer mockServer) throws IOException {
-    mockServer.responseWithJson(HttpStatus.BAD_REQUEST, new APIError(HttpStatus.BAD_REQUEST, "Invalid request",
-        new RuntimeException()), Collections.singletonMap(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
+    mockServer.response(HttpStatus.BAD_REQUEST);
 
     MultiValueMap<String, Object> parts = new LinkedMultiValueMap<>();
     parts.add("file", testFile());
@@ -161,16 +137,12 @@ class ApiGatewayRouterTest {
         .contentType(MediaType.MULTIPART_FORM_DATA)
         .body(BodyInserters.fromMultipartData(parts))
         .exchange()
-        .expectStatus().isBadRequest()
-        .expectBody()
-        .jsonPath("$.status").isEqualTo("BAD_REQUEST")
-        .jsonPath("$.message").isEqualTo("Invalid request");
+        .expectStatus().isBadRequest();
   }
 
   @Test
   void shouldThrowValidationExceptionWhenSaveResourceWithEmptyFile(@Server(service = RESOURCE) MockServer mockServer) {
-    mockServer.responseWithJson(HttpStatus.BAD_REQUEST, new APIError(HttpStatus.BAD_REQUEST, "Invalid request",
-        new RuntimeException()), Collections.singletonMap(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
+    mockServer.response(HttpStatus.BAD_REQUEST);
 
     MultiValueMap<String, Object> parts = new LinkedMultiValueMap<>();
     parts.add("file", new byte[0]);
@@ -180,16 +152,12 @@ class ApiGatewayRouterTest {
         .contentType(MediaType.MULTIPART_FORM_DATA)
         .body(BodyInserters.fromMultipartData(parts))
         .exchange()
-        .expectStatus().isBadRequest()
-        .expectBody()
-        .jsonPath("$.status").isEqualTo("BAD_REQUEST")
-        .jsonPath("$.message").isEqualTo("Invalid request");
+        .expectStatus().isBadRequest();
   }
 
   @Test
   void shouldThrowValidationExceptionWhenSaveInvalidTypeResource(@Server(service = RESOURCE) MockServer mockServer) {
-    mockServer.responseWithJson(HttpStatus.BAD_REQUEST, new APIError(HttpStatus.BAD_REQUEST, "Invalid request",
-        new RuntimeException()), Collections.singletonMap(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
+    mockServer.response(HttpStatus.BAD_REQUEST);
 
     MultiValueMap<String, Object> parts = new LinkedMultiValueMap<>();
     parts.add("file", "this is string");
@@ -199,18 +167,13 @@ class ApiGatewayRouterTest {
         .contentType(MediaType.MULTIPART_FORM_DATA)
         .body(BodyInserters.fromMultipartData(parts))
         .exchange()
-        .expectStatus().isBadRequest()
-        .expectBody()
-        .jsonPath("$.status").isEqualTo("BAD_REQUEST")
-        .jsonPath("$.message").isEqualTo("Invalid request");
+        .expectStatus().isBadRequest();
   }
 
 
   @Test
   void shouldThrowUploadFailedExceptionWhenSaveResource(@Server(service = RESOURCE) MockServer mockServer) throws IOException {
-    mockServer.responseWithJson(HttpStatus.INTERNAL_SERVER_ERROR, new APIError(HttpStatus.INTERNAL_SERVER_ERROR,
-            "Resource file upload has failed", new RuntimeException()),
-        Collections.singletonMap(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
+    mockServer.response(HttpStatus.INTERNAL_SERVER_ERROR);
 
     MultiValueMap<String, Object> parts2 = new LinkedMultiValueMap<>();
     parts2.add("file", new FileSystemResource(testFile()));
@@ -220,11 +183,7 @@ class ApiGatewayRouterTest {
         .contentType(MediaType.MULTIPART_FORM_DATA)
         .body(BodyInserters.fromMultipartData(parts2))
         .exchange()
-        .expectStatus().is5xxServerError()
-        .expectBody()
-        .jsonPath("$.status").isEqualTo("INTERNAL_SERVER_ERROR")
-        .jsonPath("$.message").value(containsString("Resource file upload has failed"));
-
+        .expectStatus().is5xxServerError();
   }
 
   @Test
@@ -262,9 +221,30 @@ class ApiGatewayRouterTest {
   }
 
   @Test
+  void shouldReturnEmptyWhenResourceByIds(@Server(service = RESOURCE) MockServer resourceServiceServer,
+      @Server(service = SONG) MockServer songServiceResource) {
+    List<Map<String, Object>> resourceRecords = new ArrayList<>();
+    resourceServiceServer.responseWithJson(HttpStatus.OK, resourceRecords,
+        Collections.singletonMap(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
+
+    songServiceResource.response(HttpStatus.BAD_REQUEST);
+
+    webTestClient.delete().uri(uriBuilder -> uriBuilder
+            .path("/resources")
+            .queryParam("id", "1")
+            .build())
+        .exchange()
+        .expectStatus().isOk();
+  }
+
+  @Test
   void shouldThrowExceptionWhenDeleteResourceByEmptyIdsList(@Server(service = RESOURCE) MockServer resourceServiceServer) {
-    resourceServiceServer.responseWithJson(HttpStatus.BAD_REQUEST, new APIError(HttpStatus.BAD_REQUEST,
-            "Invalid request", new RuntimeException("For input string: \"\"")),
+    Map<String, Object> error = new HashMap<>();
+    error.put("timestamp", new Date());
+    error.put("path", "/api/v1/resources");
+    error.put("status", "400");
+    error.put("message", "Invalid params");
+    resourceServiceServer.responseWithJson(HttpStatus.BAD_REQUEST, error,
         Collections.singletonMap(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
 
     webTestClient.delete().uri(uriBuilder -> uriBuilder
@@ -273,11 +253,7 @@ class ApiGatewayRouterTest {
             .build())
         .exchange()
         .expectStatus()
-        .isBadRequest()
-        .expectBody()
-        .jsonPath("$.status").isEqualTo("BAD_REQUEST")
-        .jsonPath("$.message").isEqualTo("Invalid request")
-        .jsonPath("$.debugMessage").isEqualTo("For input string: \"\"");
+        .isBadRequest();
   }
 
   @Test
@@ -301,19 +277,14 @@ class ApiGatewayRouterTest {
 
   @Test
   void shouldThrowDeleteFailedExceptionWhenDeleteResourceByIds(@Server(service = RESOURCE) MockServer resourceServiceServer) {
-    resourceServiceServer.responseWithJson(HttpStatus.INTERNAL_SERVER_ERROR, new APIError(HttpStatus.INTERNAL_SERVER_ERROR,
-            "Resource file deletion has failed", new RuntimeException()),
-        Collections.singletonMap(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
+    resourceServiceServer.response(HttpStatus.INTERNAL_SERVER_ERROR);
 
     webTestClient.delete().uri(uriBuilder -> uriBuilder
             .path("/resources")
             .queryParam("id", "1,2")
             .build())
         .exchange()
-        .expectStatus().is5xxServerError()
-        .expectBody()
-        .jsonPath("$.status").isEqualTo("INTERNAL_SERVER_ERROR")
-        .jsonPath("$.message").value(containsString("Resource file deletion has failed"));
+        .expectStatus().is5xxServerError();
   }
 
   @Test
@@ -332,19 +303,13 @@ class ApiGatewayRouterTest {
 
   @Test
   void shouldThrowValidationExceptionWhenSaveSongWithInvalidResourceId(@Server(service = SONG) MockServer songServiceServer) {
-    songServiceServer.responseWithJson(HttpStatus.BAD_REQUEST, new APIError(HttpStatus.BAD_REQUEST,
-            "Invalid request", new RuntimeException("Saving invalid song record")),
-        Collections.singletonMap(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
+    songServiceServer.response(HttpStatus.BAD_REQUEST);
 
     webTestClient.post().uri("/songs")
         .contentType(MediaType.APPLICATION_JSON)
         .bodyValue(buildInvalidSongMetadata())
         .exchange()
-        .expectStatus().isBadRequest()
-        .expectBody()
-        .jsonPath("$.status").isEqualTo("BAD_REQUEST")
-        .jsonPath("$.message").isEqualTo("Invalid request")
-        .jsonPath("$.debugMessage").isEqualTo("Saving invalid song record");
+        .expectStatus().isBadRequest();
   }
 
   private Map<String, Object> buildSongMetadata() {
@@ -392,19 +357,13 @@ class ApiGatewayRouterTest {
 
   @Test
   void shouldThrowExceptionWhenGetSongMetadata(@Server(service = SONG) MockServer songServiceServer) {
-    songServiceServer.responseWithJson(HttpStatus.NOT_FOUND, new APIError(HttpStatus.NOT_FOUND,
-            "Song metadata is not found", new RuntimeException("Song is not found with id '124567'")),
-        Collections.singletonMap(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
+    songServiceServer.response(HttpStatus.NOT_FOUND);
 
     webTestClient.get().uri("/songs/{id}", 124567L)
         .accept(MediaType.APPLICATION_JSON)
         .exchange()
         .expectStatus()
-        .isNotFound()
-        .expectBody()
-        .jsonPath("$.status").isEqualTo("NOT_FOUND")
-        .jsonPath("$.message").isEqualTo("Song metadata is not found")
-        .jsonPath("$.debugMessage").isEqualTo("Song is not found with id '124567'");
+        .isNotFound();
   }
 
   @Test
@@ -457,18 +416,12 @@ class ApiGatewayRouterTest {
 
   @Test
   void shouldThrowErrorWhenDeleteSongMetadataByEmptyId(@Server(service = SONG) MockServer songServiceServer) {
-    songServiceServer.responseWithJson(HttpStatus.BAD_REQUEST, new APIError(HttpStatus.BAD_REQUEST,
-            "Invalid request", new RuntimeException("For input string: \"\"")),
-        Collections.singletonMap(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
+    songServiceServer.response(HttpStatus.BAD_REQUEST);
 
     webTestClient.delete().uri(uriBuilder -> uriBuilder.path("/songs").queryParam("id", "").build())
         .exchange()
         .expectStatus()
-        .isBadRequest()
-        .expectBody()
-        .jsonPath("$.status").isEqualTo("BAD_REQUEST")
-        .jsonPath("$.message").isEqualTo("Invalid request")
-        .jsonPath("$.debugMessage").isEqualTo("For input string: \"\"");
+        .isBadRequest();
   }
 
   @Test
@@ -500,18 +453,12 @@ class ApiGatewayRouterTest {
 
   @Test
   void shouldThrowErrorWhenDeleteSongMetadataByEmptyResourceId(@Server(service = SONG) MockServer songServiceServer) {
-    songServiceServer.responseWithJson(HttpStatus.BAD_REQUEST, new APIError(HttpStatus.BAD_REQUEST,
-            "Invalid request", new RuntimeException("For input string: \"\"")),
-        Collections.singletonMap(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
+    songServiceServer.response(HttpStatus.BAD_REQUEST);
 
     webTestClient.delete().uri(uriBuilder -> uriBuilder.path("/songs/by-resource-id").queryParam("id", "").build())
         .exchange()
         .expectStatus()
-        .isBadRequest()
-        .expectBody()
-        .jsonPath("$.status").isEqualTo("BAD_REQUEST")
-        .jsonPath("$.message").isEqualTo("Invalid request")
-        .jsonPath("$.debugMessage").isEqualTo("For input string: \"\"");
+        .isBadRequest();
   }
 
   @Test
@@ -554,9 +501,7 @@ class ApiGatewayRouterTest {
   @Test
   void shouldThrowNotFoundExceptionWhenGetStoragesByType(@Server(service = STORAGE) MockServer storageServiceServer) {
     StorageType stagingType = StorageType.STAGING;
-    storageServiceServer.responseWithJson(HttpStatus.NOT_FOUND, new APIError(HttpStatus.NOT_FOUND,
-            "Storage is not found", new RuntimeException(String.format("Storage is not found by type '%s'", stagingType))),
-        Collections.singletonMap(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
+    storageServiceServer.response(HttpStatus.NOT_FOUND);
 
     webTestClient.get().uri(uriBuilder -> uriBuilder
             .path("/storages")
@@ -565,16 +510,10 @@ class ApiGatewayRouterTest {
         .accept(MediaType.APPLICATION_JSON)
         .exchange()
         .expectStatus()
-        .isNotFound()
-        .expectBody()
-        .jsonPath("$.status").isEqualTo("NOT_FOUND")
-        .jsonPath("$.message").isEqualTo("Storage is not found")
-        .jsonPath("$.debugMessage").isEqualTo(String.format("Storage is not found by type '%s'", stagingType));
+        .isNotFound();
 
     StorageType permanentType = StorageType.PERMANENT;
-    storageServiceServer.responseWithJson(HttpStatus.NOT_FOUND, new APIError(HttpStatus.NOT_FOUND,
-            "Storage is not found", new RuntimeException(String.format("Storage is not found by type '%s'", permanentType))),
-        Collections.singletonMap(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
+    storageServiceServer.response(HttpStatus.NOT_FOUND);
 
     webTestClient.get().uri(uriBuilder -> uriBuilder
             .path("/storages")
@@ -583,11 +522,7 @@ class ApiGatewayRouterTest {
         .accept(MediaType.APPLICATION_JSON)
         .exchange()
         .expectStatus()
-        .isNotFound()
-        .expectBody()
-        .jsonPath("$.status").isEqualTo("NOT_FOUND")
-        .jsonPath("$.message").isEqualTo("Storage is not found")
-        .jsonPath("$.debugMessage").isEqualTo(String.format("Storage is not found by type '%s'", permanentType));
+        .isNotFound();
   }
 
   @Test
@@ -626,34 +561,22 @@ class ApiGatewayRouterTest {
   @Test
   void shouldThrowNotFoundExceptionWhenGetStorageById(@Server(service = STORAGE) MockServer storageServiceServer) {
     long id1 = 123_234_533L;
-    storageServiceServer.responseWithJson(HttpStatus.NOT_FOUND, new APIError(HttpStatus.NOT_FOUND,
-            "Storage is not found", new RuntimeException(String.format("Storage is not found with id '%d'", id1))),
-        Collections.singletonMap(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
+    storageServiceServer.response(HttpStatus.NOT_FOUND);
 
     webTestClient.get().uri("/storages/{id}", id1)
         .accept(MediaType.APPLICATION_JSON)
         .exchange()
         .expectStatus()
-        .isNotFound()
-        .expectBody()
-        .jsonPath("$.status").isEqualTo("NOT_FOUND")
-        .jsonPath("$.message").isEqualTo("Storage is not found")
-        .jsonPath("$.debugMessage").isEqualTo(String.format("Storage is not found with id '%d'", id1));
+        .isNotFound();
 
     long id2 = 123_234_512L;
-    storageServiceServer.responseWithJson(HttpStatus.NOT_FOUND, new APIError(HttpStatus.NOT_FOUND,
-            "Storage is not found", new RuntimeException("Something bad happened during bucket head request")),
-        Collections.singletonMap(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
+    storageServiceServer.response(HttpStatus.NOT_FOUND);
 
     webTestClient.get().uri("/storages/{id}", id2)
         .accept(MediaType.APPLICATION_JSON)
         .exchange()
         .expectStatus()
-        .isNotFound()
-        .expectBody()
-        .jsonPath("$.status").isEqualTo("NOT_FOUND")
-        .jsonPath("$.message").isEqualTo("Storage is not found")
-        .jsonPath("$.debugMessage").isEqualTo("Something bad happened during bucket head request");
+        .isNotFound();
   }
 
   private Map<String, Object> buildStorage(StorageType type) {

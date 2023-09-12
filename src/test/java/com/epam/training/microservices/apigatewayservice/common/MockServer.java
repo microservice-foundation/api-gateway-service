@@ -45,6 +45,12 @@ public final class MockServer {
     server.enqueue(response);
   }
 
+  public <T> void response(HttpStatus status) {
+    MockResponse response = new MockResponse();
+    response.setResponseCode(status.value());
+    server.enqueue(response);
+  }
+
   private <T> String toJson(T value) {
     try {
       return mapper.writeValueAsString(value);

@@ -1,4 +1,4 @@
-package com.epam.training.microservices.apigatewayservice.filter;
+package com.epam.training.microservices.apigatewayservice.web.filter;
 
 import static java.util.Optional.ofNullable;
 
