@@ -22,8 +22,9 @@ public class GatewayConfiguration {
   }
 
   @Bean
-  public WebClient webClient(ReactorLoadBalancerExchangeFilterFunction loadBalancerExchangeFilterFunction) {
-    return WebClient.builder()
+  public WebClient webClient(WebClient.Builder webClientBuilder,
+      ReactorLoadBalancerExchangeFilterFunction loadBalancerExchangeFilterFunction) {
+    return webClientBuilder
         .baseUrl(baseUrl)
         .filter(loadBalancerExchangeFilterFunction)
         .build();

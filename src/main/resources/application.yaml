@@ -27,6 +27,3 @@ rate-limiter:
   replenishRate: 10    # how many requests per second you want a user to be allowed to do
   burstCapacity: 20    # the maximum number of requests a user is allowed to do in a single second.
   requestedTokens: 1   # how many tokens a request costs. This is the number of tokens taken from the bucket for each request and defaults to 1.
-
-# application configuration
-logging.level.root: DEBUG
